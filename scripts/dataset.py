@@ -13,6 +13,10 @@ def canonicalize_rxn(rxn):
     r, p = rxn.split('>>')
     for s in [r, p]:
         mol = Chem.MolFromSmiles(s)
+        if mol is None:
+            mol = Chem.MolFromSmiles(s,sanitize=False)
+            mol.UpdatePropertyCache(strict=False)
+            Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_ALL^Chem.SANITIZE_PROPERTIES)
         [atom.SetAtomMapNum(0) for atom in mol.GetAtoms()]
         canonicalized_smiles.append(Chem.MolToSmiles(mol))
     return '>>'.join(canonicalized_smiles)
