@@ -52,6 +52,11 @@ def get_bg_partition(bg):
 
 def get_edit_smarts_retro(smiles):
     mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        mol = Chem.MolFromSmiles(smiles,sanitize=False)
+        mol.UpdatePropertyCache(strict=False)
+        Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_ALL^Chem.SANITIZE_PROPERTIES)
+         
     A = [a.GetSymbol() for a in mol.GetAtoms()]
     B = []
     for bond in mol.GetBonds():
@@ -70,10 +75,19 @@ def mask_prediction(smiles, atom_logits, bond_logits, site_templates):
     atom_mask, bond_mask = torch.zeros_like(atom_logits), torch.zeros_like(bond_logits)
     for i, smarts in enumerate(atom_smarts):
         if smarts in site_templates:
-            atom_mask[i][site_templates[smarts]] = 1
+            try:
+                atom_mask[i][site_templates[smarts]] = 1
+            except:
+                1
+                #print(site_templates, atom_mask)
     for i, smarts in enumerate(bond_smarts):
         if smarts in site_templates:
-            bond_mask[i][site_templates[smarts]] = 1
+            try:
+                bond_mask[i][site_templates[smarts]] = 1
+            except:
+                1
+                #print(site_templates, bond_mask)
+
     return atom_logits*atom_mask, bond_logits*bond_mask
     
 def write_edits(args, model, test_loader):
